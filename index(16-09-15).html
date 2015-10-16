@@ -1,0 +1,131 @@
+ <html>
+ <head>
+ 
+<style>
+
+#ctl00_ContentPlaceHolder1_gridCountryTop100 {
+	border:1px solid red;
+}
+
+#theRightDiv {
+	outline:1px solid red;
+}
+
+</style>
+ 
+ </head>
+ 
+ 
+ <body>
+ 
+ <h1> qlranks </h1>
+ 
+ 
+ <button id="refreshBtn" type="button">Reload</button>
+ <button id="clearBtn" type="button">Clear</button>
+ <button id="topFive" type="button">top 5</button>
+ <div id="result" style="min-height:400px; float:left;">
+	LOADING
+ </div>
+  <div id="theRightDiv" style="min-height:400px; float:left; min-width:400px;">
+	
+ </div>
+
+  
+ <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+ <script>
+ "use strict";
+/*
+seperate out refersh into 2 diff functions one for refresh text the otherto relaod the data
+use a GLOBAL variable to build up the jquery selector string
+create a clear button and a new clear function to clear the result div
+create a button called top5 and a function that hides all table rows except for the top5 player rows and headings
+theRightDiv must mimick the result div
+
+
+the data that is retrieved from the first load must be stored in a global variable with a timestamp that shows how old the data is.
+all reloads of data after that must be loaded from the global variable untill the data is an hour old then new data must be fetched from the server.
+
+-----
+
+make another function that will be the callback function for load() on document ready.
+callback function must store the result of the load function. 
+
+
+*/
+ 
+	var resultDiv = "result",
+		refreshBtn = "refreshBtn",
+		clearBtn = "clearBtn",
+		topFive = "topFive",
+		theRightDiv = "theRightDiv",
+		dataCache = { 'html': '', 'timeStamp': $.now() } ,
+		refresh = function(){
+			
+			$( '#' + resultDiv ).html( "REFRESHING" );
+			load();
+		},
+		load = function(){
+		//need to check if the datacache html is empty.
+		//if empty, store result from load into the datacache html. else check timestamp is older than an 30 seconds, if so then reload. 
+			var temp = $.get( "index.php?url=http://www.qlranks.com/duel/country/za #ctl00_ContentPlaceHolder1_gridCountryTop100", function(){
+				dataCache.html = temp.responseText;
+			} );
+			
+			$( '#' + resultDiv ).html(dataCache.html);
+		},		
+		clear = function(){
+			$( '#' + resultDiv ).html( "LIST CLEARED" );
+		},
+		top5 = function(){
+			if( $( '#' + resultDiv ).html() == "LIST CLEARED" ){
+				$( '#' + resultDiv ).html( "Player list unavailable" );
+			}
+			else{
+				$( '#' + resultDiv + " table tr:gt(5)" ).hide();
+			}
+		},
+		mimick = function(){
+			$( '#' + theRightDiv ).html($( '#' + resultDiv ).html());
+		}
+		
+ 	
+ $( document ).ready(function() {
+	
+	//here we are CALLING the function
+	load();
+		 
+	//here we are ASSIGNING the function
+	$( '#' + refreshBtn ).on('click' ,refresh );
+	$( '#' + clearBtn ).on('click' ,clear );
+	$( '#' + topFive ).on('click' ,top5 );
+	$('button').on('click',mimick );
+	console.log(dataCache);
+});
+ 
+	
+/*
+
+	//using .get for ajax request
+// 	$.get( "index.php?url=http://www.qlranks.com/duel/country/za #ctl00_ContentPlaceHolder1_gridCountryTop100", function( data ) {
+// 		$( "#result" ).html( data );
+// 	});
+*/ 
+ </script>
+   
+   
+<!-- 
+
+	next task:
+	
+	make a seperate function for refresh. 
+	Rename current refresh function to load.
+	refresh will be assigned the function of load in order  to refresh the data.
+
+
+-->
+   
+   
+   
+ </body>
+ </html>

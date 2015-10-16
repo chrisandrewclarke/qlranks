@@ -1,0 +1,244 @@
+ <html>
+ <head>
+ 
+<style>
+
+#ctl00_ContentPlaceHolder1_gridCountryTop100 {
+	border:1px solid red;
+}
+
+#theRightDiv {
+	/*outline:1px solid red;*/
+}
+
+</style>
+ 
+ </head>
+ 
+ 
+ <body>
+ 
+<!--  <h1> qlranks </h1>
+ 
+ 
+ <button id="refreshBtn" type="button">Reload</button>
+ <button id="clearBtn" type="button">Clear</button>
+ <button id="topFive" type="button">top 5</button>
+
+ <div id="result" style="min-height:400px; float:left;">
+	Loading
+ </div>
+  <div id="theRightDiv" style="min-height:400px; float:left; min-width:400px;">
+	Loading
+ </div> -->
+
+  
+ <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+ <script>
+ "use strict";
+/*
+seperate out refersh into 2 diff functions one for refresh text the otherto relaod the data
+use a GLOBAL variable to build up the jquery selector string
+create a clear button and a new clear function to clear the result div
+create a button called top5 and a function that hides all table rows except for the top5 player rows and headings
+theRightDiv must mimick the result div
+
+
+the data that is retrieved from the first load must be stored in a global variable with a timestamp that shows how old the data is.
+all reloads of data after that must be loaded from the global variable untill the data is an hour old then new data must be fetched from the server.
+
+-----
+
+make another function that will be the callback function for load() on document ready.
+callback function must store the result of the load function. 
+
+-----
+
+right div must be hidden when page loads
+create a button on load that can toggle hiding and showing the right div
+the button's text must change depending if it can show or hide the right div
+
+*/
+ 
+	var resultDiv = $('#result'),
+		// refreshBtn = "refreshBtn",
+		// clearBtn = "clearBtn",
+		// topFive = "topFive",
+		theRightDiv = $('#theRightDiv'),
+		dataCache = { 'html': '', 'timeStamp': $.now() },
+		h1s = [
+			{
+				'id': 'theH1',
+				'display': 'qlranks',
+				'show': true
+			}
+		],
+		divs = [
+			{
+				'id': 'result',
+				'display': 'Loading',
+				'show': true
+			},
+			{
+				'id': 'theRightDiv',
+				'display': 'Loading',
+				'show': false
+			}
+		],
+		butts = [
+			{
+				'id': 'refreshBtn',
+				'display': 'Refresh',
+				'click': 'refreshList',
+				'show': true
+			},
+			{
+				'id': 'clearBtn',
+				'display': 'Clear',
+				'click': 'clearList',
+				'show': true
+			},			
+			{
+				'id': 'topFive',
+				'display': 'Top 5',
+				'click': 'showTopFive',
+				'show': true
+			},			
+			{
+				'id': 'mrToggle',
+				'display': 'Show 2nd Table',
+				'click': 'toggleRightDiv',
+				'show': true
+			}
+		],
+	
+		loadH1s = function(){
+			var h, hKey;
+			for(hKey in h1s){
+				h = '<h1 id="' + h1s[hKey].id + '">' + h1s[hKey].display + '</h1>';
+				$('body').append(h);
+				$('#' + h1s[hKey].id).toggle(divs[hKey].show);
+			}
+		},
+
+		loadDivs = function(){
+			var d, dKey;
+			for(dKey in divs){
+				console.log(divs[dKey].id);
+				d = '<div id="' + divs[dKey].id + '">' + divs[dKey].display + '</div>';
+				$('body').append(d);
+				$('#' + divs[dKey].id).toggle(divs[dKey].show);
+			}
+		},
+
+		loadButtons = function(){
+			var b, bKey;
+			for(bKey in butts){
+				b = '<button id="' + butts[bKey].id + '" type="button">' + butts[bKey].display + '</button>';
+				$('body').append(b);
+				$( '#' + butts[bKey].id ).on('click', window[butts[bKey].click]);
+				$('#' + butts[bKey].id).toggle(butts[bKey].show);
+			}
+		},
+
+		toggleRightDiv = function(){
+			theRightDiv.toggle();
+			var buttonHtml = ( theRightDiv.is(':visible') ) ? 'hide 2nd table' : 'show 2nd table';
+			$('#mrToggle').html(buttonHtml);			
+		},
+
+		refreshList = function(){
+			console.log("REFRESHING");
+			resultDiv.html( "REFRESHING" );
+			loadList();
+		},
+
+		loadDiv = function(){
+			resultDiv.html(dataCache.html).promise().done(mimick);
+		},
+
+		loadList = function(){
+		//need to check if the datacache html is empty.
+		//if empty, store result from load into the datacache html. else check timestamp is older than an hour, if so then reload.
+			
+	    if ( dataCache.html == "" || dataCache.timeStamp + 60000 < $.now()){
+				$.get( "index.php?url=http://www.qlranks.com/duel/country/za #ctl00_ContentPlaceHolder1_gridCountryTop100", function(html){
+					dataCache.html = html;
+					dataCache.timeStamp = $.now();
+					loadDiv();					
+				});
+			}
+			else{
+				loadDiv();	
+			}
+			
+		},	
+
+		clearList = function(){
+			resultDiv.html( "LIST CLEARED" );
+		},
+
+		showTopFive = function(){
+			if( resultDiv.html() == "LIST CLEARED" ){
+				resultDiv.html( "Player list unavailable" );
+			}
+			else{
+				//$( '#' + resultDiv + " table tr:gt(5)" ).hide();
+				resultDiv.find(" table tr:gt(5)" ).hide();
+			}
+		},
+
+		mimick = function(){
+			console.log('im finally called mimick!!!');
+			theRightDiv.html(resultDiv.html());
+		}
+		
+ 	
+ $( document ).ready(function() {
+	
+	//here we are CALLING the function
+	// 
+		 
+	//here we are ASSIGNING the function
+	
+	// 
+	// 
+	loadH1s();
+	loadDivs();
+	loadButtons();	
+	// loadList();
+
+	// $( '#' + refreshBtn ).on('click' ,refreshList );
+	// $( '#' + clearBtn ).on('click' ,clearList );
+	// $( '#' + topFive ).on('click' ,showTopFive );
+
+	$('button').on('click',mimick );
+	// wconsole.log(dataCache);
+});
+ 
+	
+/*
+
+	//using .get for ajax request
+// 	$.get( "index.php?url=http://www.qlranks.com/duel/country/za #ctl00_ContentPlaceHolder1_gridCountryTop100", function( data ) {
+// 		$( "#result" ).html( data );
+// 	});
+*/ 
+ </script>
+   
+   
+<!-- 
+
+	next task:
+	
+	make a seperate function for refresh. 
+	Rename current refresh function to load.
+	refresh will be assigned the function of load in order  to refresh the data.
+
+
+-->
+   
+   
+   
+ </body>
+ </html>

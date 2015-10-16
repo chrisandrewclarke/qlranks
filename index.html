@@ -1,0 +1,308 @@
+ <html>
+ <head>
+ 
+<style>
+
+#ctl00_ContentPlaceHolder1_gridCountryTop100 {
+	border:1px solid red;
+}
+
+#theRightDiv {
+	display:none;
+}
+
+#theRightDiv.show {
+	
+}
+
+.highlighted{
+	background-color:red;
+	color:white;
+}
+
+.highlightBlue {
+	background-color:blue;
+	color:white;
+}
+
+.compareBox {
+	position:absolute;
+	left:50%;
+	top:20%;
+	outline:1px solid red;
+	height:50px;
+	width:600px;
+}
+
+#firstCompare {
+	float:left;
+	margin-right:10px;
+}
+
+h2 {
+	display:inline-block;
+	width:100%;
+	float:left;
+}
+
+h2 + table {
+	clear:left;
+}
+
+.block {
+	float:left;
+    width:50%;
+}
+
+</style>
+ 
+ </head>
+ 
+ 
+ <body>
+ 
+ <h1> qlranks </h1>
+ 
+ 
+ <button id="refreshBtn" type="button">Reload</button>
+ <button id="clearBtn" type="button">Clear</button>
+ <button id="topFive" type="button">top 5</button>
+ <button id="compare" type="button">compare</button>
+ <button id="showHideBtn" type="button">show</button>
+ <button id="highlightBtn" type="button">highlight</button>
+ <input type="text" id="playerOne"></input>
+ <input type="text" id="playerTwo"></input>
+ <div id="result" style="min-height:400px; float:left;">
+	Loading
+ </div>
+ <div class="compareBox">
+	<div class="block">
+		<h2 id="firstPlayer">asdad</h2>
+		<div id="firstCompare">
+		</div>
+ 	</div>
+ 	<div class="block">
+		<h2 id="secondPlayer">qqqqq</h2>
+		<div id="secondCompare">
+		</div>
+ 	</div>
+ </div>
+  <div id="theRightDiv" style="min-height:400px; float:left; min-width:400px;">
+	Loading
+ </div>
+
+  
+ <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+ <script>
+ "use strict";
+/*
+seperate out refersh into 2 diff functions one for refresh text the otherto relaod the data
+use a GLOBAL variable to build up the jquery selector string
+create a clear button and a new clear function to clear the result div
+create a button called top5 and a function that hides all table rows except for the top5 player rows and headings
+theRightDiv must mimick the result div
+
+
+the data that is retrieved from the first load must be stored in a global variable with a timestamp that shows how old the data is.
+all reloads of data after that must be loaded from the global variable untill the data is an hour old then new data must be fetched from the server.
+
+-----
+
+make another function that will be the callback function for load() on document ready.
+callback function must store the result of the load function. 
+
+-----
+
+--right div must be hidden when page loads
+create a button on load that can toggle hiding and showing the right div
+the button's text must change depending if it can show or hide the right div
+
+*/
+ 
+ 
+ 
+	var resultDiv = $( '#result' ),
+		refreshBtn = "refreshBtn",
+		clearBtn = "clearBtn",
+		topFive = $('#topFive'),
+		compare = $('#compare'),
+		firstCompare = $('#firstCompare'),
+		secondCompare = $('#secondCompare'),
+		theRightDiv = $('#theRightDiv'),
+		highlightButton = $('#highlightBtn'),
+		dataCache = { 'html': '', 'timeStamp': $.now() },
+		playerOneString = $('#playerOne').val(),
+		playerTwoString = $('#playerTwo').val(),
+		firstPlayer = $('#firstPlayer'),
+		secondPlayer = $('#secondPlayer'),
+		showHideButton = function(){
+// 							topFive.after('<button id="showHideBtn" type="button">show</button>');
+							$("#showHideBtn").on('click', showHide );
+						},
+
+		showHide = function() {
+						console.log('showing hiding');
+							theRightDiv.toggle();
+						if( $("#showHideBtn").html() == "Show" ){
+							$("#showHideBtn").html("Hide");
+						}
+						else{
+							$("#showHideBtn").html("Show");
+						};
+					},
+		refreshList = function(){
+			resultDiv.html( "REFRESHING" );
+			loadList();
+		},
+
+		highlight = function(){
+		// this is how find a table row with a specific string.
+				// filtering for table row that matches the text in playerOne input field.
+				var player1 = $("td").filter(function() {
+					return $(this).text() == $('#playerOne').val();
+				}).closest("tr");
+				// filtering for table row that matches the text in playerTwo input field.
+				var player2 = $("td").filter(function() {
+					return $(this).text() == $('#playerTwo').val();
+				}).closest("tr");
+				// creating var with all table rows
+				var tableRows = $("tr");
+				// remove class  from all table rows
+				tableRows.removeClass("highlighted");
+				tableRows.removeClass("highlightBlue");
+				// adding highlighted class to the table row containing text matched in input fields 
+				player1.addClass("highlighted");
+				player2.addClass("highlightBlue");
+// 				console.log(player1);
+				
+		},
+		showVs = function(a,b){
+			playerOneString = $('#playerOne').val();
+			playerTwoString = $('#playerTwo').val();
+// 			console.log(a + " vs " + b);
+			loadPlayer(a,"first"); //loadPlayer(name,playerBlock) playerBlock is being set to a string of "first"
+			loadPlayer(b,"second");
+			firstPlayer.html(playerOneString);
+			secondPlayer.html(playerTwoString);
+		},
+
+		loadPlayer = function(name,playerBlock){
+// 			console.log(name,playerBlock);
+			//when loadPlayer is run in the showVs function, playerBlock is being set to "first".
+			if(playerBlock == "first") {
+				var player = firstCompare; //firstCompare is a global var = $('#firstCompare');
+				
+			}
+			else {
+				var player = secondCompare;
+				
+			}
+			
+			player.html("LOADING...");
+			var getRequest = $.get( "index.php?playerName=" + name, function(html){
+				player.html(html);
+			});
+			
+			
+// 			secondCompare.html("LOADING...");
+// 			$.get( "index.php?playerName=" + b, function(html){
+// 				secondCompare.html(html);
+// 			});
+			
+// 			console.log(name);
+		
+		},	
+		
+		loadDiv = function(){
+			console.log(resultDiv);
+			resultDiv.html(dataCache.html).promise().done(mimick);
+
+		},
+
+		loadList = function(){
+		//need to check if the datacache html is empty.
+		//if empty, store result from load into the datacache html. else check timestamp is older than an hour, if so then reload.
+			
+		    if ( dataCache.html == "" || dataCache.timeStamp + 60000 < $.now()){
+		    //vital_stats
+				$.get( "index.php?url=http://www.qlranks.com/duel/country/za #ctl00_ContentPlaceHolder1_gridCountryTop100", function(html){
+					dataCache.html = html;
+					dataCache.timeStamp = $.now();
+					loadDiv();					
+				});
+			}
+			else{
+				loadDiv();
+			}
+		},	
+
+		clearList = function(){
+			resultDiv.html( "LIST CLEARED" );
+		},
+
+		showTopFive = function(){
+			if( resultDiv.html() == "LIST CLEARED" ){
+				resultDiv.html( "Player list unavailable" );
+			}
+			else{
+				//$( '#' + resultDiv + " table tr:gt(5)" ).hide();
+				resultDiv.find(" table tr:gt(5)" ).hide();
+			}
+		},
+
+		comparePlayers = function(){
+			//take val() from playerOneString and playerTwoString and insert into firstCompare and secondCompare respectively.
+			//console.log('player strings');
+			showVs(playerOneString,playerTwoString);
+		},
+
+		mimick = function(){
+			console.log('im finally called mimick!!!');
+			theRightDiv.html(resultDiv.html());
+		};
+		
+ 	
+ $( document ).ready(function() {
+	
+	//here we are CALLING the function
+	showHideButton(); 
+	loadList();
+// 	showHide();
+		 
+	//here we are ASSIGNING the function
+	$( '#' + refreshBtn ).on('click' ,refreshList );
+	$( '#' + clearBtn ).on('click' ,clearList );
+	topFive.on('click' ,showTopFive );
+	compare.on('click' ,comparePlayers );
+// 	$('button').on('click',mimick );
+	$('#showHideBtn').on('click', showHide );
+	$('#highlightBtn').on('click', highlight );
+	// wconsole.log(dataCache);
+});
+ 
+	
+/*
+
+	//using .get for ajax request
+// 	$.get( "index.php?url=http://www.qlranks.com/duel/country/za #ctl00_ContentPlaceHolder1_gridCountryTop100", function( data ) {
+// 		$( "#result" ).html( data );
+// 	});
+*/ 
+ </script>
+   
+   
+<!-- 
+
+	next task:
+	
+	make a seperate function for refresh. 
+	Rename current refresh function to load.
+	refresh will be assigned the function of load in order  to refresh the data.
+
+
+-->
+   
+   
+   
+ </body>
+ </html>
